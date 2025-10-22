@@ -1,14 +1,11 @@
-package main
+package node
 
 import (
 	"fmt"
-	"log"
-	"net"
-	"net/rpc"
 	"sync"
 )
 
-//reps the local key-value storage on a node
+// reps the local key-value storage on a node
 type KVStore struct {
 	mu    sync.RWMutex
 	store map[string]string
@@ -21,7 +18,7 @@ func NewKVStore() *KVStore {
 	}
 }
 
-//Retrieves a value for a given key
+// Retrieves a value for a given key
 func (kv *KVStore) Get(key string, reply *string) error {
 	kv.mu.RLock()
 	defer kv.mu.RUnlock()
@@ -33,7 +30,8 @@ func (kv *KVStore) Get(key string, reply *string) error {
 	return fmt.Errorf("key '%s' not found", key)
 }
 
-//stores a key-value pair
+// stores a key-value pair
+
 func (kv *KVStore) Put(pair map[string]string, reply *bool) error {
 	kv.mu.Lock()
 	defer kv.mu.Unlock()
@@ -42,29 +40,4 @@ func (kv *KVStore) Put(pair map[string]string, reply *bool) error {
 	}
 	*reply = true
 	return nil
-}
-
-type Node struct {
-	id      string
-	address string
-	kvStore *KVStore
-}
-
-func NewNode(id, address string) *Node {
-	return &Node{
-		id:      id,
-		address: address,
-		kvStore: NewKVStore(),
-	}
-}
-
-func (n *Node) Serve() {
-	rpc.Register(n.kvStore)
-	listener, err := net.Listen("tcp", n.address)
-
-	if err != nil {
-		log.Fatalf("Error listening on %s: %v", n.address, err)
-	}
-	log.Printf("Node %s listening on %s", n.id, n.address)
-	rpc.Accept(listener)
 }
